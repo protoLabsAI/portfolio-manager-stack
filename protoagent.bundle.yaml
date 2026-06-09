@@ -14,3 +14,10 @@ enabled: [delegates, project_board, agent_browser]   # suggested turn-on list (y
 config:                                              # recommended defaults (you apply them)
   agent_browser:
     panel_mode: full
+
+# Agent archetype (ADR 0042) — presents this bundle as a starter "agent type" in the
+# new-agent picker. Additive metadata; it doesn't change the bundle shape.
+archetype:
+  label: Project Manager
+  icon: LayoutGrid
+  blurb: Board-driven shipping agent — decomposes an idea and ships it through coding agents.
