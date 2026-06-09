@@ -1,0 +1,16 @@
+# A protoAgent plugin BUNDLE (ADR 0040) — a curated, pinned set of plugins installed
+# together with one command. Install:  python -m server plugin install <this-repo-url>
+id: pm-stack
+name: Project Manager Stack
+description: >-
+  A board-driven project-management agent stack — beads-backed board orchestration
+  that decomposes an idea and dispatches coding agents to ship it, a real browser,
+  and the delegate spine that powers them. Composes three standalone plugins.
+plugins:
+  - { id: delegates, builtin: true }                                                    # ships with protoAgent
+  - { id: project_board, url: https://github.com/protoLabsAI/projectBoard-plugin,  ref: 671d673f18bbb6adf7fbbf39f7624c9438db1f2f }
+  - { id: agent_browser, url: https://github.com/protoLabsAI/agent-browser-plugin, ref: ec896c087afd1dc11fc53fba678f1e064131f3b0 }
+enabled: [delegates, project_board, agent_browser]   # suggested turn-on list (you apply it)
+config:                                              # recommended defaults (you apply them)
+  agent_browser:
+    panel_mode: full
