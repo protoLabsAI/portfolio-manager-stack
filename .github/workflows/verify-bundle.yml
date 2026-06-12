@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    runs-on: namespace-profile-protolabs-linux
     steps:
       - uses: actions/checkout@v4
 
@@ -43,7 +43,7 @@ jobs:
 
   bump:
     if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: namespace-profile-protolabs-linux
     steps:
       - uses: actions/checkout@v4
 
