@@ -1,15 +1,26 @@
 # A protoAgent plugin BUNDLE (ADR 0040) — a curated, pinned set of plugins installed
 # together with one command. Install:  python -m server plugin install <this-repo-url>
+#
+# PIN LIFECYCLE (ADR 0049): pins are release TAGS and only move through a passing
+# verify — .github/workflows/verify-bundle.yml installs this manifest into a scratch
+# agent and probes every declared console view (each PR + weekly), and the scheduled
+# bump job opens a PR when a member tags a new release. Keep member entries on ONE
+# line (scripts/check_bundle_updates.py rewrites the `ref:` token in place).
 id: pm-stack
 name: Project Manager Stack
 description: >-
   A board-driven project-management agent stack — beads-backed board orchestration
   that decomposes an idea and dispatches coding agents to ship it, a real browser,
   and the delegate spine that powers them. Composes three standalone plugins.
+
+# The core version this pin set was last verified against (ADR 0049). The verify
+# workflow smokes against protoAgent main; bump this when re-verified on a release.
+verified_against: 0.35.3
+
 plugins:
   - { id: delegates, builtin: true }                                                    # ships with protoAgent
-  - { id: project_board, url: https://github.com/protoLabsAI/projectBoard-plugin,  ref: 5d38f8bcd9d2c60bb9b0b1b7de0565d0ed6f05f2 }
-  - { id: agent_browser, url: https://github.com/protoLabsAI/agent-browser-plugin, ref: 8e4c34ec263acac56884738989ba0d14a0483b44 }
+  - { id: project_board, url: https://github.com/protoLabsAI/projectBoard-plugin,  ref: v0.1.1 }
+  - { id: agent_browser, url: https://github.com/protoLabsAI/agent-browser-plugin, ref: v0.1.1 }
 enabled: [delegates, project_board, agent_browser]   # suggested turn-on list (you apply it)
 config:                                              # recommended defaults (you apply them)
   agent_browser:

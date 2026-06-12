@@ -11,8 +11,20 @@ dispatches coding agents to ship it, and gives the agent a real browser.
 | **[agent_browser](https://github.com/protoLabsAI/agent-browser-plugin)** | browser automation (vercel-labs/agent-browser) + a live Browser panel |
 | **delegates** | the ACP/A2A spawn spine (ships with protoAgent) |
 
-The two external plugins are **pinned to specific commits** — `pm-stack` is a *tested combo*,
-not "whatever's latest." Bump the refs when you re-validate the set.
+The two external plugins are **pinned to release tags** — `pm-stack` is a *tested combo*,
+not "whatever's latest." The pin means **"last verified working"** and only moves through
+a passing verification (ADR 0049): CI installs this manifest's pin set into a scratch
+agent and probes every declared console view on each PR + weekly, and a scheduled job
+opens a pin-bump PR when a member tags a new release. `verified_against:` in the manifest
+records the core version the set was last verified on.
+
+```bash
+# verify locally (from a protoAgent checkout, deps synced)
+uv run --no-sync python /path/to/pm-stack/scripts/verify_bundle.py /path/to/pm-stack
+
+# check members for newer release tags (rewrites refs in place)
+python3 scripts/check_bundle_updates.py protoagent.bundle.yaml
+```
 
 ## Install
 ```bash
