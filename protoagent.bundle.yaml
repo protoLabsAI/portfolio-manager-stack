@@ -8,8 +8,8 @@ description: >-
   and the delegate spine that powers them. Composes three standalone plugins.
 plugins:
   - { id: delegates, builtin: true }                                                    # ships with protoAgent
-  - { id: project_board, url: https://github.com/protoLabsAI/projectBoard-plugin,  ref: 671d673f18bbb6adf7fbbf39f7624c9438db1f2f }
-  - { id: agent_browser, url: https://github.com/protoLabsAI/agent-browser-plugin, ref: ec896c087afd1dc11fc53fba678f1e064131f3b0 }
+  - { id: project_board, url: https://github.com/protoLabsAI/projectBoard-plugin,  ref: 5d38f8bcd9d2c60bb9b0b1b7de0565d0ed6f05f2 }
+  - { id: agent_browser, url: https://github.com/protoLabsAI/agent-browser-plugin, ref: 8e4c34ec263acac56884738989ba0d14a0483b44 }
 enabled: [delegates, project_board, agent_browser]   # suggested turn-on list (you apply it)
 config:                                              # recommended defaults (you apply them)
   agent_browser:
