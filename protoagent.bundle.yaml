@@ -21,7 +21,7 @@ plugins:
   - { id: delegates, builtin: true }                                                    # ships with protoAgent
   - { id: project_board, url: https://github.com/protoLabsAI/projectBoard-plugin,  ref: v0.19.0 }
   - { id: agent_browser, url: https://github.com/protoLabsAI/agent-browser-plugin, ref: v0.5.1 }
-  - { id: portfolio,     url: https://github.com/protoLabsAI/portfolio-plugin,     ref: v0.4.0 }
+  - { id: portfolio,     url: https://github.com/protoLabsAI/portfolio-plugin,     ref: v0.5.0 }
 enabled: [delegates, project_board, agent_browser, portfolio]   # suggested turn-on list (you apply it)
 config:                                              # recommended defaults (you apply them)
   agent_browser:
