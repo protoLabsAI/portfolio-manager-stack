@@ -1,5 +1,18 @@
-# A protoAgent plugin BUNDLE (ADR 0040) — a curated, pinned set of plugins installed
-# together with one command. Install:  python -m server plugin install <this-repo-url>
+# A protoAgent plugin BUNDLE (ADR 0040) — the Portfolio Manager tier of the
+# portfolio→team hierarchy, the manager-of-teams counterpart to the Lead Engineer
+# bundle (github.com/protoLabsAI/leadEngineer).
+#
+# Install:  python -m server plugin install <this-repo-url>
+#
+# A Portfolio Manager orchestrates work across MANY Lead Engineer teams: it spins a
+# team up per project (portfolio_spinup_team), dispatches features to it over A2A,
+# rolls up + diffs + sequences cross-board dependencies, and disposes a team once its
+# board drains. It does NOT run a board itself — that's the team tier.
+#
+# So this bundle ENABLES the manager tier (delegates + portfolio) but INSTALLS the
+# team tier too (project_board + agent_browser, off by default): a spawned team's
+# plugins.dir defaults to THIS host's plugins dir, so the team discovers project_board
+# here without a per-team reinstall. Install once, provision many teams.
 #
 # PIN LIFECYCLE (ADR 0049): pins are release TAGS and only move through a passing
 # verify — .github/workflows/verify-bundle.yml installs this manifest into a scratch
@@ -7,29 +20,64 @@
 # bump job opens a PR when a member tags a new release. Keep member entries on ONE
 # line (scripts/check_bundle_updates.py rewrites the `ref:` token in place).
 id: pm-stack
-name: Project Manager Stack
+name: Portfolio Manager
 description: >-
-  A board-driven project-management agent stack — beads-backed board orchestration
-  that decomposes an idea and dispatches coding agents to ship it, a real browser,
-  and the delegate spine that powers them. Composes three standalone plugins.
+  The manager-of-teams tier (ADR 0055). One agent orchestrates work across MANY Lead
+  Engineer teams: it spins a team up per project on demand (portfolio_spinup_team),
+  dispatches features to each team's board over A2A, rolls up a bounded cross-board
+  view, watches for changes, sequences cross-board dependencies, and disposes a team
+  once its board drains. It runs no board of its own — the project-team counterpart is
+  the Lead Engineer bundle. Enables the manager spine (delegates + portfolio) and
+  carries the team plugins (project_board + agent_browser, installed but off) so the
+  teams it spawns discover them on this host. The portfolio→team split of the old
+  pm-stack.
 
-# The core version this pin set was last verified against (ADR 0049). The verify
-# workflow smokes against protoAgent main; bump this when re-verified on a release.
-verified_against: 0.35.3
+# The core version this exact pin set was last verified against (ADR 0049). The verify
+# workflow checks out this protoAgent ref for the smoke — bump on re-verify.
+verified_against: 0.66.0
 
 plugins:
-  - { id: delegates, builtin: true }                                                    # ships with protoAgent
-  - { id: project_board, url: https://github.com/protoLabsAI/projectBoard-plugin,  ref: v0.19.0 }
-  - { id: agent_browser, url: https://github.com/protoLabsAI/agent-browser-plugin, ref: v0.5.1 }
-  - { id: portfolio,     url: https://github.com/protoLabsAI/portfolio-plugin,     ref: v0.5.0 }
-enabled: [delegates, project_board, agent_browser, portfolio]   # suggested turn-on list (you apply it)
-config:                                              # recommended defaults (you apply them)
-  agent_browser:
-    panel_mode: full
+  - { id: delegates, builtin: true }                                                  # ACP/A2A spawn spine — ships with protoAgent
+  - { id: portfolio,     url: https://github.com/protoLabsAI/portfolio-plugin,     ref: v0.7.2 }   # orchestrate + spawn teams
+  - { id: project_board, url: https://github.com/protoLabsAI/projectBoard-plugin,  ref: v0.19.0 }  # installed-not-enabled: spawned teams' board
+  - { id: agent_browser, url: https://github.com/protoLabsAI/agent-browser-plugin, ref: v0.5.1 }   # installed-not-enabled: spawned teams' browser
 
-# Agent archetype (ADR 0042) — presents this bundle as a starter "agent type" in the
-# new-agent picker. Additive metadata; it doesn't change the bundle shape.
+# The PM runs the MANAGER tier only. project_board + agent_browser stay installed-but-off
+# here — they're for the Lead Engineer teams this PM spawns (which discover them via this
+# host's plugins dir), not for the PM itself.
+enabled: [delegates, portfolio]
+config:
+  portfolio:
+    # The base team config portfolio_spinup_team clones per project. Empty falls back to
+    # the portfolio plugin's shipped example (a generic project_board + delegates team);
+    # point this at a creds-filled copy (gateway key + model.api_base) so spawned teams
+    # run real model turns. {{REPO}} / {{TEAM_NAME}} / {{GATE}} are filled per spawn.
+    team_template: ""
+
+# Agent archetype (ADR 0042) — presents this bundle as a "Portfolio Manager" agent type
+# in the new-agent picker, with a starting persona. Additive metadata.
 archetype:
-  label: Project Manager
-  icon: LayoutGrid
-  blurb: Board-driven shipping agent — decomposes an idea and ships it through coding agents.
+  label: Portfolio Manager
+  icon: Network
+  blurb: Orchestrates many engineering teams — spins one up per project, dispatches + rolls up work, disposes it when the board drains.
+  soul: |
+    # Portfolio Manager
+
+    You are a portfolio manager. You orchestrate work across MANY engineering teams —
+    you do not write code or run a board yourself.
+
+    Your loop, per project:
+    - Spin up a team for it with `portfolio_spinup_team(name, repo)` — an ephemeral
+      Lead Engineer pinned to that repo. Reuse a standing team if one already fits.
+    - Dispatch self-sufficient features to its board with `portfolio_dispatch` (give a
+      clear spec + acceptance criteria + the files to touch — a vague task ships nothing).
+    - Sequence cross-team dependencies with `portfolio_link` + `portfolio_plan` +
+      `portfolio_autodispatch`; hold work behind a blocker and release it when that ships.
+    - Stay current without polling: `portfolio_watch` once, then read the deltas
+      `portfolio_diff` surfaces (merged / blocked / unblocked / new).
+    - Dispose a finite project's team when its board drains — `portfolio_autodispose`
+      (or `portfolio_teardown_team`). Standing teams you keep.
+
+    Think in terms of OUTCOMES across the portfolio, not individual diffs. Keep each
+    team's brief small and shippable, watch the rollup, unblock what's stuck, and report
+    progress as features merge to done.
