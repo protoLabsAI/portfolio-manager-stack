@@ -1,23 +1,66 @@
-# Project Manager Stack — a protoAgent plugin bundle
+# Portfolio Manager — a protoAgent plugin bundle
 
 A **bundle** (ADR 0040): a curated, pinned set of plugins you install with one command.
-`pm-stack` stands up a board-driven project-management agent — it decomposes an idea,
-dispatches coding agents to ship it, and gives the agent a real browser.
+`pm-stack` stands up a **Portfolio Manager** — the manager-of-teams tier of the
+portfolio→team hierarchy (ADR 0055). It orchestrates work across **many Lead Engineer
+teams**: it spins a team up per project, dispatches features to each team's board over
+A2A, rolls up a bounded cross-board view, sequences cross-board dependencies, and disposes
+a team once its board drains. It runs **no board of its own** — that's the team tier.
+
+The project-team counterpart is the **[Lead Engineer](https://github.com/protoLabsAI/leadEngineer)**
+bundle (a single repo + its coding agents). This bundle is the manager that delegates to them.
 
 ## What's in it
-| Plugin | Role |
-|---|---|
-| **[project_board](https://github.com/protoLabsAI/projectBoard-plugin)** | beads-backed 6-state board + ACP spawn loop + adversarial planning + Kanban/list view |
-| **[agent_browser](https://github.com/protoLabsAI/agent-browser-plugin)** | browser automation (vercel-labs/agent-browser) + a live Browser panel |
-| **delegates** | the ACP/A2A spawn spine (ships with protoAgent) |
+| Plugin | Role | On the PM? |
+|---|---|---|
+| **delegates** | the ACP/A2A spawn spine (ships with protoAgent) | **enabled** |
+| **[portfolio](https://github.com/protoLabsAI/portfolio-plugin)** | orchestrate + **spawn** teams: `portfolio_spinup_team`, `dispatch`, `rollup`, `diff`/`watch`, `link`/`plan`/`autodispatch`, `autodispose` | **enabled** |
+| **[project_board](https://github.com/protoLabsAI/projectBoard-plugin)** | beads-backed board + ACP spawn loop — the **team's** board | installed, off |
+| **[agent_browser](https://github.com/protoLabsAI/agent-browser-plugin)** | browser automation — the **team's** browser | installed, off |
 
-The two external plugins are **pinned to release tags** — `pm-stack` is a *tested combo*,
-not "whatever's latest." The pin means **"last verified working"** and only moves through
-a passing verification (ADR 0049): CI installs this manifest's pin set into a scratch
-agent and probes every declared console view on each PR + weekly, and a scheduled job
-opens a pin-bump PR when a member tags a new release. `verified_against:` in the manifest
-records the core version the set was last verified on.
+### Why the team plugins are installed but off
+A Portfolio Manager doesn't run a board. But the **Lead Engineer teams it spawns do** —
+and a spawned team's `plugins.dir` defaults to **this host's** plugins dir. So pm-stack
+installs `project_board` (+ `agent_browser`) here, off by default, and every team the PM
+spins up discovers them on this host without a per-team reinstall. **Install once, provision
+many teams.**
 
+The external plugins are **pinned to release tags** — `pm-stack` is a *tested combo*, not
+"whatever's latest." A pin means **"last verified working"** and only moves through a passing
+verification (ADR 0049): CI installs this manifest's pin set into a scratch agent and probes
+every declared console view on each PR + weekly, and a scheduled job opens a pin-bump PR when
+a member tags a new release. `verified_against:` records the core version the set was last
+verified on.
+
+## Install
+```bash
+python -m server plugin install https://github.com/protoLabsAI/pm-stack
+```
+Install ≠ enable ≠ trust — the installer prints the suggested `plugins.enabled` + config;
+apply them to your `config/langgraph-config.yaml`:
+```yaml
+plugins:
+  enabled: [delegates, portfolio]
+portfolio:
+  # The base team config portfolio_spinup_team clones per project. Empty uses the portfolio
+  # plugin's shipped example; point it at a creds-filled copy (gateway key + model.api_base)
+  # so spawned teams run real model turns.
+  team_template: /path/to/your/team-template
+```
+then restart. The board the PM's teams run needs the `br` (beads) CLI on this host.
+
+## Spinning up teams
+Once enabled, the Portfolio Manager spins up an ephemeral Lead Engineer team per project:
+```
+portfolio_spinup_team(name="docs-team", repo="/abs/path/to/repo")   # boots + registers a board
+portfolio_dispatch(board="docs-team", title=…, spec=…)              # send it work over A2A
+portfolio_autodispose()                                             # once its board drains, dispose it
+```
+See the [portfolio plugin](https://github.com/protoLabsAI/portfolio-plugin) for the full tool
+set + team-template details, and [Lead Engineer](https://github.com/protoLabsAI/leadEngineer)
+for the team tier.
+
+## Maintenance
 ```bash
 # verify locally (from a protoAgent checkout, deps synced)
 uv run --no-sync python /path/to/pm-stack/scripts/verify_bundle.py /path/to/pm-stack
@@ -25,22 +68,3 @@ uv run --no-sync python /path/to/pm-stack/scripts/verify_bundle.py /path/to/pm-s
 # check members for newer release tags (rewrites refs in place)
 python3 scripts/check_bundle_updates.py protoagent.bundle.yaml
 ```
-
-## Install
-```bash
-python -m server plugin install https://github.com/protoLabsAI/pm-stack
-```
-That fans out and installs each member (pinned in `plugins.lock`). It does **not** enable
-anything — install ≠ enable ≠ trust. To turn the stack on, the installer prints the suggested
-`plugins.enabled` list + config; apply them to your `config/langgraph-config.yaml`:
-```yaml
-plugins:
-  enabled: [delegates, project_board, agent_browser]
-agent_browser:
-  panel_mode: full
-```
-then restart. Each plugin's own README covers its prerequisites (the board needs the `br`
-CLI; agent_browser needs the `agent-browser` binary).
-
-## See it running
-**[roxy](https://github.com/protoLabsAI/roxy)** runs this stack — the reference host.
