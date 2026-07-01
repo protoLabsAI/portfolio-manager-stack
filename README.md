@@ -41,13 +41,19 @@ apply them to your `config/langgraph-config.yaml`:
 ```yaml
 plugins:
   enabled: [delegates, portfolio]
-portfolio:
-  # The base team config portfolio_spinup_team clones per project. Empty uses the portfolio
-  # plugin's shipped example; point it at a creds-filled copy (gateway key + model.api_base)
-  # so spawned teams run real model turns.
-  team_template: /path/to/your/team-template
+# That's it — no team_template needed. Spawned teams INHERIT the PM's own gateway
+# (portfolio v0.14+): the PM's resolved model.api_base + its OPENAI_API_KEY (via the team's
+# environment) carry over, so a team boots ready to think with zero creds prep. Only set a
+# team_template for a team you want on a DIFFERENT gateway than the PM's:
+# portfolio:
+#   team_template: /path/to/your/team-template   # optional — a per-team gateway/config
 ```
 then restart. The board the PM's teams run needs the `br` (beads) CLI on this host.
+
+**One-pick setup:** installing the bundle also registers a **"Portfolio Manager"** archetype
+in the new-agent picker (ADR 0042) — pick it and you get a PM with `delegates`+`portfolio`
+enabled and the manager persona set, no YAML. With gateway inheritance there's nothing else
+to configure: spin up a team and it runs on your gateway.
 
 ## Spinning up teams
 Once enabled, the Portfolio Manager spins up an ephemeral Lead Engineer team per project:
