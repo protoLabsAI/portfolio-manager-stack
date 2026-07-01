@@ -48,10 +48,11 @@ plugins:
 enabled: [delegates, portfolio]
 config:
   portfolio:
-    # The base team config portfolio_spinup_team clones per project. Empty falls back to
-    # the portfolio plugin's shipped example (a generic project_board + delegates team);
-    # point this at a creds-filled copy (gateway key + model.api_base) so spawned teams
-    # run real model turns. {{REPO}} / {{TEAM_NAME}} / {{GATE}} are filled per spawn.
+    # The base team config portfolio_spinup_team clones per project. EMPTY IS THE HAPPY PATH
+    # (portfolio v0.14+): a spawned team inherits the PM's own resolved gateway + its
+    # OPENAI_API_KEY (via the team's env), so it runs real model turns with NO creds prep.
+    # Only point this at a creds-filled copy for a team on a DIFFERENT gateway than the PM's.
+    # {{REPO}} / {{TEAM_NAME}} / {{GATE}} are filled per spawn.
     team_template: ""
 
 # Agent archetype (ADR 0042) — presents this bundle as a "Portfolio Manager" agent type
