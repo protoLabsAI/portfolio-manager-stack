@@ -2,9 +2,10 @@
 """Verify a bundle's pin set against a protoAgent checkout (ADR 0049).
 
 Installs the bundle (at its pinned refs) into a SCRATCH agent, enables every member,
-loads them through the real plugin loader, and probes every declared console-view
-path over HTTP — the check that catches "the pin predates the view fix" before an
-operator spawns a broken archetype.
+loads them through the real plugin loader, probes every declared console-view path
+over HTTP, and probes the parameterless GET data routes of the members the bundle
+ENABLES — the checks that catch "the pin predates the view fix" and "the page serves
+but the data layer 500s" before an operator spawns a broken archetype.
 
 Run from inside a protoAgent checkout with deps synced (the verify workflow does
 exactly this):
@@ -12,7 +13,8 @@ exactly this):
     uv run --no-sync python /path/to/bundle/scripts/verify_bundle.py /path/to/bundle
 
 The bundle path must be a git repo (a CI checkout is); the installer clones from it.
-Exit code 0 = every member installed, loaded, and every declared view answered 200.
+Exit code 0 = every member installed, loaded, every declared view answered 200, and
+every enabled member's parameterless GET data route answered < 500.
 """
 
 from __future__ import annotations
@@ -91,12 +93,35 @@ def main(bundle_src: str) -> int:
             if not ok:
                 failures.append(f"{pid}: view {path!r} returned {status}")
 
+    # ── 4. PROBE the data routes of ENABLED members ───────────────────────────────
+    # The page probe alone can't catch a data-layer break: a view page serves 200
+    # while every /api/plugins/<id>/* route 500s (portfolio v0.14.1 importing the
+    # scope_leaf knob protoAgent 0.77 deleted — the dashboard died, verify stayed
+    # green). So every parameterless GET route under an enabled member's gated
+    # prefix must answer < 500. Enabled members only: carried-but-off members
+    # (project_board, agent_browser) legitimately need runtime state (a bound
+    # repo, a browser) this scratch agent doesn't have.
+    from fastapi.routing import APIRoute
+
+    enabled_members = set(summary.get("enabled") or []) & set(members)
+    for route in app.routes:
+        if not isinstance(route, APIRoute) or "GET" not in (route.methods or set()) or "{" in route.path:
+            continue
+        pid = next((p for p in enabled_members if route.path.startswith(f"/api/plugins/{p}/")), None)
+        if pid is None:
+            continue
+        status = client.get(route.path).status_code
+        ok = status < 500
+        print(f"  data {pid} {route.path!r} -> {status}{'' if ok else '  ✗'}")
+        if not ok:
+            failures.append(f"{pid}: data route {route.path!r} returned {status}")
+
     if failures:
         print(f"\nFAIL ({len(failures)}):")
         for f in failures:
             print(f"  - {f}")
         return 1
-    print(f"\nOK — {len(members)} member(s) installed+loaded, all declared views serve 200.")
+    print(f"\nOK — {len(members)} member(s) installed+loaded, declared views serve 200, enabled data routes < 500.")
     return 0
 
 
